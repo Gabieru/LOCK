@@ -1,1 +1,1 @@
-draw_text_transformed(0, 0, "Highscore: " + string(highscore), 2, 2, 0);
+draw_text_transformed(0, 0, "highscore: " + string(highscore), 2, 2, 0);

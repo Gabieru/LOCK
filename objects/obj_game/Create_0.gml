@@ -3,6 +3,8 @@ coin_radius = radius + 40;
 size = 16;
 thing_radius = radius + size * 1.25;
 
+slider = false;
+
 x = room_width / 2;
 y = room_height / 2;
 game_start_speed = 1.2;
@@ -22,6 +24,8 @@ state_timer = 0;
 
 var f = ini_open("record.ini")
 highscore = ini_read_real("record", "highscore", 0);
+audio_set_master_gain(0, ini_read_real("options", "volume", 1));
+play_music = ini_read_real("options", "music", true);
 ini_close();
 
 audio_sound_loop_start(mus_lock, 14.382);
@@ -39,7 +43,7 @@ pre_music_play_pitch = 0.8;
 
 checkpoint = 15;
 
-advance_game_angles = function() {
+advance_game_angles = function(change = 240) {
 	lock_direction *= -1;
 		
 	last_angle = target_angle;
@@ -48,7 +52,7 @@ advance_game_angles = function() {
 	while (abs(angle_difference(target_angle, next_target)) < min_angle_diff) {
 		var r = 240;
 		if ((score <= 50) and (abs(score - 50) <= 5)) r = min_angle_diff * 2;
-		next_target += random_range(0, 240) * -lock_direction;
+		next_target += random_range(0, change) * -lock_direction;
 	}
 }
 
@@ -66,7 +70,7 @@ init_variables = function() {
 	lock_direction = -1;
 	target_angle = game_angle;
 	next_target = game_angle;
-	repeat 2 advance_game_angles();
+	repeat 2 advance_game_angles(90);
 	
 	afterimage_timer = 0;
 	afterimage_angle = game_angle;
@@ -78,6 +82,7 @@ init_variables = function() {
 	beat_score = 0;
 	
 	coin_scale = 0;
+	coin_timer = 0;
 	
 	score = 0;
 }
@@ -94,3 +99,6 @@ onBeat = function () {
 }
 
 init_variables();
+
+sys.shake_init("thing", 0, 0.5);
+sys.shake_init("circle", 0, 0.3);

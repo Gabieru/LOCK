@@ -1,8 +1,11 @@
 var one = sys.one;
 var click = keyboard_check_pressed(vk_space) or mouse_check_button_pressed(mb_left);
+var click_held = mouse_check_button(mb_left);
+var click_released = mouse_check_button_released(mb_left);
 
 var lstate = state;
 state_timer += one;
+coin_timer += one;
 
 if (speaker != noone) {
 	var interval = beat_second_interval(get_music_asset());
@@ -20,6 +23,11 @@ var lose_game = function() {
 	ini_close();
 	window_mouse_set_locked(false);
 	window_set_cursor(cr_arrow);
+	
+	audio_play_sound(snd_lose, 1, false);
+	sys.shake_set("thing", 5);
+	sys.shake_set("circle", 3);
+	
 	if (speaker != noone) {
 		if (pre_music) {
 		audio_stop_sound(speaker);
@@ -32,6 +40,12 @@ var lose_game = function() {
 }
 
 var manage_music = function() {
+	var hitsound = snd_coin;
+	if (lock_direction == -1) hitsound = snd_kick;
+	audio_sound_pitch(audio_play_sound(hitsound, 1, false), 1 + random_range(-0.1, 0.1));
+	
+	if (!play_music) return;
+	
 	if (score >= checkpoint) {
 		if (speaker == noone || pre_music) {
 			audio_sound_pitch(speaker, 1);
@@ -58,28 +72,58 @@ var speed_up = function(n = 1) {
 
 switch state {
 	case st.wait:
-		if (click) {
-			state = st.play;
-			window_mouse_set_locked(true);
-			window_set_cursor(cr_none);
+		if (slider or (abs(mouse_x - x) < 100 and mouse_y > room_height - 48)) {
 			
-			var play_pre_music = function () {
-				speaker = audio_play_sound(mus_happyland, 1, true);
-				pre_music = true;
-				audio_sound_pitch(speaker, pre_music_start_pitch);
+			if (click_held) {
+				audio_set_master_gain(0, clamp(0.5 + (mouse_x - x) / 160, 0, 1))
+				slider = true;
 			}
 			
-			if (speaker == noone) {
-				play_pre_music();
+			if (click or click_released) {
+				audio_play_sound(snd_fireball, 1, false);
+				ini_open("record.ini");
+				ini_write_real("options", "volume", audio_get_master_gain(0));
+				ini_close();
+				slider = false;
 			}
-			else {
-				if (audio_sound_get_gain(speaker) <= 0) {
-					audio_stop_sound(speaker);
-					speaker = noone;
-					play_pre_music();
+		}
+		else if (mouse_x < 48 and mouse_y > room_height - 48) {
+			if (click) {
+				play_music = !play_music;
+				if (play_music) audio_play_sound(snd_dragon_coin, 1, false);
+				else audio_play_sound(snd_fireball, 1, false);
+				ini_open("record.ini");
+				ini_write_real("options", "music", play_music);
+				ini_close();
+			}
+		}
+		else {
+			if (click) {
+				state = st.play;
+				window_mouse_set_locked(true);
+				window_set_cursor(cr_none);
+			
+				var play_pre_music = function () {
+					speaker = audio_play_sound(mus_happyland, 1, true);
+					pre_music = true;
+					audio_sound_pitch(speaker, pre_music_start_pitch);
 				}
-				else {
-					audio_sound_gain(speaker, 1, 1000);
+				
+				if (play_music) {
+			
+					if (speaker == noone) {
+						play_pre_music();
+					}
+					else {
+						if (audio_sound_get_gain(speaker) <= 0) {
+							audio_stop_sound(speaker);
+							speaker = noone;
+							play_pre_music();
+						}
+						else {
+							audio_sound_gain(speaker, 1, 1000);
+						}
+					}
 				}
 			}
 		}
@@ -105,7 +149,13 @@ switch state {
 			if (passing) {
 				//lose_game();
 				if (speed_index < 999) {
-					if (game_speed * pass_multiplier < 46) pass_multiplier ++;
+					if (game_speed * pass_multiplier < 46)
+					{
+						pass_multiplier ++;
+						audio_stop_sound(snd_blargg);
+						audio_play_sound(snd_blargg, 1, false);
+						sys.shake_set("thing", 5);
+					}
 				}
 				passing = false;
 			}
@@ -124,6 +174,7 @@ switch state {
 			if (in_angle) {
 				speed_up(1);
 				score++;
+				coin_timer = 0;
 				
 				manage_music();
 				

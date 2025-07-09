@@ -1,5 +1,5 @@
 var one = sys.one;
-image_alpha -= one * 0.02;
+image_alpha -= one * 0.01;
 
 var decel = 0.1;
 if (spd > 0) {
@@ -16,7 +16,10 @@ if (spd > 0) {
 	spd -= one * decel / 2;
 }
 
+image_blend = merge_color(c_yellow, c_white, clamp(spd / 2, 0, 1));
+
+image_index += img_spd * one;
 if (image_index >= sprite_get_number(sprite_index) - 1) {
-	image_speed = 0;
+	img_spd = 0;
 	image_index = sprite_get_number(sprite_index) - 1;
 }

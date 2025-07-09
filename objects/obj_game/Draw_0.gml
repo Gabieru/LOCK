@@ -9,7 +9,7 @@ coin_scale += (coin_scale - 1)
 
 var draw_open = function(i, angle_diff, radius, spd, x_center, y_center, scale, op, ind) {
 	var ang = i * angle_diff + ((game_angle * spd) / 2);
-	draw_sprite_ext(spr_open, ind, x + x_center + dcos(ang) * radius, y + y_center - dsin(ang) * radius, scale, scale, ang, c_white, op);
+	draw_sprite_ext(spr_open, ind, x + x_center + dcos(ang) * radius + sys.shakeX("circle"), y + y_center - dsin(ang) * radius  + sys.shakeY("circle"), scale, scale, ang, c_white, op);
 }
 
 var whoo = 10;
@@ -33,9 +33,9 @@ for (var j = 1; j <= whoo; j ++) {
 draw_sprite_ext(spr_ojo, 0, x + 40 * dcos(game_angle), y - 40 * dsin(game_angle), 1, 1, 0, c_white, get_op(1, whoo));
 
 
-draw_sprite_ext(spr_coin, 0, x + dcos(target_angle) * coin_radius, y - dsin(target_angle) * coin_radius, 1, 1, 0, c_yellow, 1);
+draw_sprite_ext(spr_coin, 0, x + dcos(target_angle) * coin_radius + sys.shakeX("circle"), y - dsin(target_angle) * coin_radius + sys.shakeY("circle"), 1, 1, 0, c_yellow, (clamp(coin_timer / 5, 0, 1)));
 
-draw_sprite_ext(spr_thing, 0, x + dcos(game_angle) * thing_radius, y - dsin(game_angle) * thing_radius, 1, 1, game_angle, c_white, 1);
+draw_sprite_ext(spr_thing, 0, x + dcos(game_angle) * thing_radius + sys.shakeX("thing"), y - dsin(game_angle) * thing_radius + sys.shakeY("thing"), 1, 1, game_angle, c_white, 1);
 
 draw_set_halign(fa_center);
 draw_set_valign(fa_middle);
@@ -49,12 +49,27 @@ draw_line(x, y, x + dcos(game_angle - min_angle_diff) * 1000, y - dsin(game_angl
 draw_line(x, y, x + dcos(game_angle + min_angle_diff) * 1000, y - dsin(game_angle + min_angle_diff) * 1000)
 draw_set_color(c_white);
 */
-draw_text_transformed(x, y, score, 2, 2, 0);
-draw_text_transformed(x, y-48, music_bpm(mus_lock), 2, 2, 0);
+draw_set_font(sys.big_font_mono);
+draw_text_transformed(x - sys.shakeX("thing"), y - 16 - sys.shakeY("thing"), score, 3, 3, 0);
+draw_set_font(sys.big_font);
+
+
 
 switch state {
+	case st.wait:
+		var cx = x;
+		var cy = room_height - 24;
+		draw_text(cx, cy - 24, "volume");
+		draw_sprite_ext(spr_bar, 0, cx, cy, 10, 1, 0, c_white, 1);
+		draw_sprite(spr_bar, 1, cx + (audio_get_master_gain(0) - 0.5) * size * 10, cy);
+		
+		draw_sprite(spr_bar, 1 + play_music, 16, room_height - 16);
+		draw_set_halign(fa_left);
+		draw_text(32, room_height - 16, "music");
+		draw_set_halign(fa_center);
+		break;
 	case st.game_over:
-		draw_text_transformed(x, y + 32, "GAME OVER", 2, 2, 0);
+		draw_text_transformed(x + sys.shakeY("circle"), y + 32 + sys.shakeX("circle"), "game over", 2, 2, 0);
 }
 
 draw_set_halign(fa_left);
