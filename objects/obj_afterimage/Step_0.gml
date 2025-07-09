@@ -1,5 +1,6 @@
 var one = sys.one;
 image_alpha -= one * 0.05;
+if (image_alpha <= 0) instance_destroy();
 
 var decel = 0.5;
 if (spd > 0) {

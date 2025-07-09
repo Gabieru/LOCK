@@ -42,6 +42,7 @@ pre_music_start_pitch = 0.75;
 pre_music_play_pitch = 0.8;
 
 checkpoint = 15;
+reached_checkpoint = false;
 
 advance_game_angles = function(change = 240) {
 	lock_direction *= -1;

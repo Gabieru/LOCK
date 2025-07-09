@@ -12,9 +12,11 @@ var draw_open = function(i, angle_diff, radius, spd, x_center, y_center, scale, 
 	draw_sprite_ext(spr_open, ind, x + x_center + dcos(ang) * radius + sys.shakeX("circle"), y + y_center - dsin(ang) * radius  + sys.shakeY("circle"), scale, scale, ang, c_white, op);
 }
 
+
+
 var whoo = 10;
 var get_op = function(j, whoo) {
-	 return power((j / whoo), clamp(200 / score, 0, 100));
+	 return power((j / whoo), clamp(200 / clamp(score - 15, 1, score), 0, 100));
 }
 for (var j = 1; j <= whoo; j ++) {
 	var x_center = 4*(whoo - j) * dcos((game_angle + j * 2) );

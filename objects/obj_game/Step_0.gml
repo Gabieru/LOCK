@@ -39,14 +39,17 @@ var lose_game = function() {
 	}
 }
 
-var manage_music = function() {
-	var hitsound = snd_coin;
-	if (lock_direction == -1) hitsound = snd_kick;
-	audio_sound_pitch(audio_play_sound(hitsound, 1, false), 1 + random_range(-0.1, 0.1));
+var manage_music = function(play_sound = true) {
+	if (play_sound) {
+		var hitsound = snd_coin;
+		if (lock_direction == -1) hitsound = snd_kick;
+		audio_sound_pitch(audio_play_sound(hitsound, 1, false), 1 + random_range(-0.05, 0.05));
+	}
 	
 	if (!play_music) return;
 	
 	if (score >= checkpoint) {
+		reached_checkpoint = true;
 		if (speaker == noone || pre_music) {
 			audio_sound_pitch(speaker, 1);
 			if (speaker != noone) audio_stop_sound(speaker);
@@ -124,6 +127,8 @@ switch state {
 							audio_sound_gain(speaker, 1, 1000);
 						}
 					}
+					
+					manage_music(false);
 				}
 			}
 		}
@@ -210,7 +215,7 @@ switch state {
 		if (keyboard_check_pressed(ord("R")) or (state_timer > 10 and click)) {
 			init_variables();
 			if (speaker != noone) {
-				if (audio_sound_get_gain(speaker) > 0) {
+				if (reached_checkpoint) {
 					score = checkpoint;
 					speed_up(checkpoint);
 				}
