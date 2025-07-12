@@ -37,7 +37,26 @@ draw_sprite_ext(spr_ojo, 0, x + 40 * dcos(game_angle), y - 40 * dsin(game_angle)
 
 draw_sprite_ext(spr_coin, 0, x + dcos(target_angle) * coin_radius + sys.shakeX("circle"), y - dsin(target_angle) * coin_radius + sys.shakeY("circle"), 1, 1, 0, c_yellow, (clamp(coin_timer / 5, 0, 1)));
 
-draw_sprite_ext(spr_thing, 0, x + dcos(game_angle) * thing_radius + sys.shakeX("thing"), y - dsin(game_angle) * thing_radius + sys.shakeY("thing"), 1, 1, game_angle, c_white, 1);
+// Draw thing
+var draw_thing = function(ang, op) {
+	draw_sprite_ext(spr_thing, 0, x + dcos(ang) * thing_radius + sys.shakeX("thing"), y - dsin(ang) * thing_radius + sys.shakeY("thing"), 1, 1, ang, c_white, op);
+}
+
+var gang = prev_frame_angle;
+var gdir = sign(angle_difference(game_angle, gang));
+
+var aDiff = function(gang) {
+	return angle_difference(game_angle, gang);
+}
+
+var ogDiff = aDiff(gang);
+
+while aDiff(gang) * gdir > 0 {
+	draw_thing(gang, 1 - (aDiff(gang) / ogDiff));
+	gang += gdir;
+}
+
+draw_thing(game_angle, 1);
 
 draw_set_halign(fa_center);
 draw_set_valign(fa_middle);

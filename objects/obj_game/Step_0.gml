@@ -7,6 +7,8 @@ var lstate = state;
 state_timer += one;
 coin_timer += one;
 
+prev_frame_angle += (game_angle - prev_frame_angle) * (1 - power(0.3, one));
+
 if (speaker != noone) {
 	var interval = beat_second_interval(get_music_asset());
 	var actual_beat = ceil(audio_sound_get_track_position(speaker) / interval);
@@ -49,7 +51,6 @@ var manage_music = function(play_sound = true) {
 	if (!play_music) return;
 	
 	if (score >= checkpoint) {
-		reached_checkpoint = true;
 		if (speaker == noone || pre_music) {
 			audio_sound_pitch(speaker, 1);
 			if (speaker != noone) audio_stop_sound(speaker);
@@ -139,14 +140,32 @@ switch state {
 		}
 		var slowmo_factor = 1 - (slowmo / slowmo_time);
 		
-		var lgame_angle = game_angle;
+		var lgame_angle = prev_frame_angle;
 		game_angle += game_speed * lock_direction * one * slowmo_factor * pass_multiplier;
 		
 		if (slowmo > 0) {
 			slowmo -= one / 2;
 		}
 		
-		var in_angle = abs(angle_difference(game_angle, target_angle)) < angle_window;
+
+		var thing_mark_1 = prev_frame_angle;
+		var thing_mark_2 = game_angle;
+			
+		var target_mark_1 = target_angle - angle_window;
+		var target_mark_2 = target_angle + angle_window;
+			
+		if (angle_difference(thing_mark_2, thing_mark_1) < 0) {
+			thing_mark_1 = game_angle;
+			thing_mark_2 = prev_frame_angle;
+		}
+			
+		var in_angle = (
+			angle_in_range(thing_mark_1, target_mark_1, target_mark_2) or
+			angle_in_range(thing_mark_2, target_mark_1, target_mark_2) or
+			angle_in_range(target_mark_1, thing_mark_1, thing_mark_2) or
+			angle_in_range(target_mark_2, thing_mark_1, thing_mark_2)
+		)
+
 		if (in_angle) {
 			if (!passing) passing = true;
 		}
@@ -166,11 +185,16 @@ switch state {
 			}
 		}
 		
-		while (abs(angle_difference(afterimage_angle, game_angle)) > 8) {
-			afterimage_angle += 8 * lock_direction;
-			if (abs(angle_difference(target_angle, next_target)) < min_angle_diff * 2) {
-				var ang = afterimage_angle;
-				instance_create_layer(x + dcos(ang) * thing_radius, y - dsin(ang) * thing_radius, layer_get_id("afterimage"), obj_afterimage).image_angle = ang;
+		var aDiff = angle_difference(afterimage_angle, prev_frame_angle);
+		if (aDiff != 0) {
+			while (abs(aDiff) > 8) {
+				afterimage_angle += 8 * -sign(aDiff);
+				if (abs(angle_difference(target_angle, next_target)) < min_angle_diff * 2) {
+					var ang = afterimage_angle;
+					instance_create_layer(x + dcos(ang) * thing_radius, y - dsin(ang) * thing_radius, layer_get_id("afterimage"), obj_afterimage).image_angle = ang;
+				}
+				
+				aDiff = angle_difference(afterimage_angle, prev_frame_angle);
 			}
 		}
 		
@@ -184,6 +208,7 @@ switch state {
 				manage_music();
 				
 				if (score > highscore) highscore = score;
+				if (score >= checkpoint) reached_checkpoint = true;
 				passing = false;
 				
 				instance_create_layer(x + dcos(target_angle) * (coin_radius + size), y - dsin(target_angle) * (coin_radius + size), "afterimage", obj_coin, {image_angle: target_angle});
@@ -193,6 +218,11 @@ switch state {
 					if (close_calls > 0) {
 						with obj_afterimage {
 							spd = 12;
+						}
+						
+						with obj_coin {
+							spd = 5;
+							image_index = 0;
 						}
 					}
 					else close_calls++;
@@ -214,11 +244,9 @@ switch state {
 	case st.game_over:
 		if (keyboard_check_pressed(ord("R")) or (state_timer > 10 and click)) {
 			init_variables();
-			if (speaker != noone) {
-				if (reached_checkpoint) {
-					score = checkpoint;
-					speed_up(checkpoint);
-				}
+			if (reached_checkpoint) {
+				score = checkpoint;
+				speed_up(checkpoint);
 			}
 		}
 	break;

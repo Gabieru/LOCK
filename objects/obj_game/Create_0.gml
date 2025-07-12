@@ -66,6 +66,7 @@ init_variables = function() {
 	slowmo = 1;
 	
 	game_angle = 90;
+	prev_frame_angle = game_angle;
 	game_speed = game_start_speed;
 	
 	lock_direction = -1;
